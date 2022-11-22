@@ -65,3 +65,4 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.samples[idx], self.labels[idx]
+        
