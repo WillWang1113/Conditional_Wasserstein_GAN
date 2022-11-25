@@ -1,5 +1,5 @@
 import torch
-import pandas as pd
+import numpy as np
 from torch import nn
 from torch.utils.data import Dataset
 
@@ -9,14 +9,14 @@ class Generator(nn.Module):
     def __init__(self, input_feature: int, output_feature: int):
         super(Generator, self).__init__()
 
-        def block(in_feat, out_feat, normalize=False):
+        def block(in_feat, out_feat, normalize=True):
             layers = [nn.Linear(in_feat, out_feat)]
             if normalize:
                 layers.append(nn.BatchNorm1d(out_feat, 0.8))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
-        self.model = nn.Sequential(*block(input_feature, 128, normalize=False),
+        self.model = nn.Sequential(*block(input_feature, 128, normalize=True),
                                    *block(128, 256), *block(256, 512),
                                    *block(512, 1024),
                                    nn.Linear(1024, output_feature), nn.Tanh())
@@ -47,22 +47,22 @@ class Discriminator(nn.Module):
 
 class MyDataset(Dataset):
 
-
-    def __init__(self, filedir, indice=None):
-        if indice is None:
-            samples = pd.read_csv(filedir).values[:, :-1]
-            self.samples = torch.from_numpy(samples).float().cuda()
-            labels = pd.read_csv(filedir).values[:, -1].reshape(-1, 1)
-            self.labels = torch.from_numpy(labels).float().cuda()
-        else:
-            samples = pd.read_csv(filedir).values[indice, :-1]
-            self.samples = torch.from_numpy(samples).float().cuda()
-            labels = pd.read_csv(filedir).values[indice, -1].reshape(-1, 1)
-            self.labels = torch.from_numpy(labels).float().cuda()
+    def __init__(self, data: np.ndarray, indice: list = None):
+        data = data.astype(float)
+        self.samples = torch.from_numpy(data).float().cuda()
+        # if indice is None:
+        #     samples = data[:, :-1]
+        #     self.samples = torch.from_numpy(samples).float().cuda()
+        #     labels = data[:, -1].reshape(-1, 1)
+        #     self.labels = torch.from_numpy(labels).float().cuda()
+        # else:
+        #     samples = data[indice, :-1]
+        #     self.samples = torch.from_numpy(samples).float().cuda()
+        #     labels = data[indice, -1].reshape(-1, 1)
+        #     self.labels = torch.from_numpy(labels).float().cuda()
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.samples)
 
     def __getitem__(self, idx):
-        return self.samples[idx], self.labels[idx]
-        
+        return self.samples[idx], self.samples[idx]

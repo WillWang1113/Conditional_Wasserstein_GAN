@@ -154,3 +154,6 @@ cython_debug/
 
 # Notebook
 mytest.ipynb
+data/
+loggings/
+runs/
