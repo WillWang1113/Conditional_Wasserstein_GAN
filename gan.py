@@ -19,7 +19,7 @@ class Generator(nn.Module):
         self.model = nn.Sequential(*block(input_feature, 128, normalize=True),
                                    *block(128, 256), *block(256, 512),
                                    *block(512, 1024),
-                                   nn.Linear(1024, output_feature), nn.Tanh())
+                                   nn.Linear(1024, output_feature))
 
     def forward(self, z: torch.Tensor):
         out = self.model(z)
@@ -50,16 +50,6 @@ class MyDataset(Dataset):
     def __init__(self, data: np.ndarray, indice: list = None):
         data = data.astype(float)
         self.samples = torch.from_numpy(data).float().cuda()
-        # if indice is None:
-        #     samples = data[:, :-1]
-        #     self.samples = torch.from_numpy(samples).float().cuda()
-        #     labels = data[:, -1].reshape(-1, 1)
-        #     self.labels = torch.from_numpy(labels).float().cuda()
-        # else:
-        #     samples = data[indice, :-1]
-        #     self.samples = torch.from_numpy(samples).float().cuda()
-        #     labels = data[indice, -1].reshape(-1, 1)
-        #     self.labels = torch.from_numpy(labels).float().cuda()
 
     def __len__(self):
         return len(self.samples)
