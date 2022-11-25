@@ -13,8 +13,10 @@ def fit(data_file, batch_size: int, lr: tuple, epochs: int, clip_value:float, n_
     features, _ = next(iter(dataloader))
     input_shape = features.shape
 
+    # For Generator: sync input and output (can be not sync)
     generator = Generator(input_feature=input_shape[-1],
                           output_feature=input_shape[-1]).cuda()
+    # For Disciminator: input is fake data
     discriminator = Discriminator(input_feature=input_shape[-1]).cuda()
 
 
@@ -22,7 +24,6 @@ def fit(data_file, batch_size: int, lr: tuple, epochs: int, clip_value:float, n_
     optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=lr[0])
     optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=lr[1])
 
-    # Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
     # ----------
     #  Training

@@ -64,6 +64,5 @@ class MyDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        print("jjj")
         return self.samples[idx], self.labels[idx]
         
