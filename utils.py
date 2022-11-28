@@ -5,6 +5,22 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import correlation
 from scipy.stats import wasserstein_distance
 from tslearn.metrics import dtw
+import numpy as np
+import random
+
+
+def setup_seed(seed: int = 9):
+    """set a fix random seed.
+
+    Args:
+        seed (int, optional): random seed. Defaults to 9.
+    """
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+
 
 def autocor(data, lags, plot=True):
     # compute autocorrelation for lag=[0:lags]
