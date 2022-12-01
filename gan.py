@@ -19,7 +19,7 @@ class Generator(nn.Module):
 
         # conditional gan
         input_feature = noise_len + condition_len
-        self.model = nn.Sequential(*block(input_feature, 128, normalize=True),
+        self.model = nn.Sequential(*block(input_feature, 128, normalize=False),
                                    *block(128, 256), *block(256, 512),
                                    *block(512, 1024),
                                    nn.Linear(1024, output_feature))

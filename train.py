@@ -7,7 +7,7 @@ from utils import setup_seed
 
 
 def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
-        clip_value: float, n_critic: int):
+        clip_value: float, n_critic: int, latent_dim: int):
 
     # ----------------------------------------------------------------------------------------
     #  Load preprocessed data
@@ -26,7 +26,7 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
     print(f"labels: {labels.shape}")
 
     # For Generator: sync input and output (can be not sync)
-    generator = Generator(noise_len=samples.shape[-1],
+    generator = Generator(noise_len=latent_dim,
                           condition_len=labels.shape[-1],
                           output_feature=samples.shape[-1]).cuda()
     # For Disciminator: input is fake data
@@ -59,19 +59,19 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
             optimizer_D.zero_grad()
 
             # Sample noise as generator input
-            z = torch.normal(0, 1, X.shape).cuda()
+            z = torch.normal(0, 1, (X.shape[0], latent_dim)).cuda()
+            # z = torch.normal(0, 1, X.shape).cuda()
 
             # Generate a batch of images
             fake_data = generator(z, con)
             # Adversarial loss
             loss_D = -torch.mean(discriminator(real_data, con)) + torch.mean(
                 discriminator(fake_data, con))
-            # writer.add_scalar("Loss/loss_dis", -loss_D, batches_done)
             writer.add_scalars(
-                "Loss/loss_dis", {
+                "Loss", {
                     'D(x)': -torch.mean(discriminator(real_data, con)),
                     'D(G(z))': torch.mean(discriminator(fake_data, con)),
-                    'loss_D':loss_D
+                    'loss_D': loss_D
                 }, batches_done)
             loss_D.backward()
             optimizer_D.step()
@@ -94,7 +94,6 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
                 gen_imgs = generator(z, con)
                 # Adversarial loss
                 loss_G = -torch.mean(discriminator(gen_imgs, con))
-                # writer.add_scalar("Loss/loss_gen", loss_G, batches_done)
 
                 loss_G.backward()
                 optimizer_G.step()
@@ -104,15 +103,33 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
                        len(dataloader), loss_D.item(), loss_G.item()))
 
             batches_done += 1
-    torch.save(generator, "loggings/generator.pth")
-    torch.save(discriminator, "loggings/discriminator.pth")
+
+    # save model with names
+    save_name = data_file.split('_')[0]
+    torch.save(generator, f"{save_name}_generator.pth")
+    torch.save(discriminator, f"{save_name}_discriminator.pth")
 
 
 if __name__ == "__main__":
-    # setup_seed(9)
-    fit(data_file='loggings/data_preprocess.pkl',
+    setup_seed(9)
+    # -----------------
+    #       wind
+    # -----------------
+    # fit(data_file='loggings/wind_preprocess.pkl',
+    #     batch_size=16,
+    #     lr=(5e-5, 5e-5),
+    #     epochs=600,
+    #     clip_value=1e-2,
+    #     n_critic=5,
+    #     latent_dim=96)
+
+    # -----------------
+    #        pv
+    # -----------------
+    fit(data_file='loggings/pv_preprocess.pkl',
         batch_size=16,
         lr=(5e-5, 5e-5),
-        epochs=500,
+        epochs=600,
         clip_value=1e-2,
-        n_critic=4)
+        n_critic=5,
+        latent_dim=96)

@@ -7,6 +7,7 @@ from scipy.stats import wasserstein_distance
 from tslearn.metrics import dtw
 import numpy as np
 import random
+import pickle
 
 
 def setup_seed(seed: int = 9):
@@ -22,30 +23,48 @@ def setup_seed(seed: int = 9):
     torch.backends.cudnn.deterministic = True
 
 
+def scale(train_data, val_data, test_data, scaler=None, name=None):
+    results = {
+        "train_ds": train_data,
+        "val_ds": val_data,
+        "test_ds": test_data,
+        "scaler": scaler
+    }
+
+    if name is None:
+        name = "name"
+    pickle.dump(results, open(f'loggings/{name}_preprocess.pkl', 'wb'))
+
+
 def autocor(data, lags, plot=True):
     # compute autocorrelation for lag=[0:lags]
-    cor = sm.tsa.acf(data, nlags = lags)
+    cor = sm.tsa.acf(data, nlags=lags)
     if plot:
-        sm.graphics.tsa.plot_acf(data, lags = lags)
+        sm.graphics.tsa.plot_acf(data, lags=lags)
         plt.show()
     return cor
+
 
 def cdf(data):
     # return CDF function
     return ECDF(data)
+
 
 def psd(data):
     # compute power spectral density
     pxx, freqs = plt.psd(data)
     return pxx, freqs
 
+
 def cor_dist(data_1, data_2):
     # compute correlation distance between data_1 & data_2
     return correlation(data_1, data_2)
 
+
 def ws_dist(data_1, data_2):
     # compute wasserstein distance between data_1 & data_2
     return wasserstein_distance(data_1, data_2)
+
 
 def dtw_dist(data_1, data_2):
     # compute distance between data_1 & data_2 by Dynamic time warping
