@@ -36,6 +36,12 @@ def scale(train_data, val_data, test_data, scaler=None, name=None):
     pickle.dump(results, open(f'loggings/{name}_preprocess.pkl', 'wb'))
 
 
+def encode(data, col, max_val):
+    data[col + '_sin'] = np.sin(2 * np.pi * data[col]/max_val)
+    data[col + '_cos'] = np.cos(2 * np.pi * data[col]/max_val)
+    return data
+    
+
 def autocor(data, lags, plot=True):
     # compute autocorrelation for lag=[0:lags]
     cor = sm.tsa.acf(data, nlags=lags)

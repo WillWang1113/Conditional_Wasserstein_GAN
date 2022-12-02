@@ -7,7 +7,7 @@ from utils import setup_seed
 
 
 def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
-        clip_value: float, n_critic: int, latent_dim: int):
+        clip_value: float, n_critic: int, latent_dim: int, condition: bool):
 
     # ----------------------------------------------------------------------------------------
     #  Load preprocessed data
@@ -25,14 +25,20 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
     print(f"samples: {samples.shape}")
     print(f"labels: {labels.shape}")
 
+    # set cGAN or not
+    if condition:
+        condition_len = labels.shape[-1]
+    else:
+        condition_len = 0
+
     # For Generator: sync input and output (can be not sync)
     generator = Generator(noise_len=latent_dim,
-                          condition_len=labels.shape[-1],
+                          condition_len=condition_len,
                           output_feature=samples.shape[-1]).cuda()
     # For Disciminator: input is fake data
     discriminator = Discriminator(
         input_feature=samples.shape[-1],
-        condition_len=labels.shape[-1],
+        condition_len=condition_len,
     ).cuda()
 
     # Optimizers
@@ -99,15 +105,15 @@ def fit(data_file: str, batch_size: int, lr: tuple, epochs: int,
                 optimizer_G.step()
 
                 print("[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]" %
-                      (epoch, epochs, batches_done % len(dataloader),
-                       len(dataloader), loss_D.item(), loss_G.item()))
+                        (epoch, epochs, batches_done % len(dataloader),
+                        len(dataloader), loss_D.item(), loss_G.item()))
 
             batches_done += 1
 
     # save model with names
     save_name = data_file.split('_')[0]
-    torch.save(generator, f"{save_name}_generator.pth")
-    torch.save(discriminator, f"{save_name}_discriminator.pth")
+    torch.save(generator, f"{save_name}_C{condition}_G.pth")
+    torch.save(discriminator, f"{save_name}_C{condition}_D.pth")
 
 
 if __name__ == "__main__":
@@ -115,21 +121,23 @@ if __name__ == "__main__":
     # -----------------
     #       wind
     # -----------------
-    # fit(data_file='loggings/wind_preprocess.pkl',
-    #     batch_size=16,
-    #     lr=(5e-5, 5e-5),
-    #     epochs=600,
-    #     clip_value=1e-2,
-    #     n_critic=5,
-    #     latent_dim=96)
-
-    # -----------------
-    #        pv
-    # -----------------
-    fit(data_file='loggings/pv_preprocess.pkl',
+    fit(data_file='loggings/wind_preprocess.pkl',
         batch_size=16,
         lr=(5e-5, 5e-5),
         epochs=600,
         clip_value=1e-2,
         n_critic=5,
-        latent_dim=96)
+        latent_dim=96,
+        condition=True)
+
+    # -----------------
+    #        pv
+    # -----------------
+    # fit(data_file='loggings/pv_preprocess.pkl',
+    #     batch_size=16,
+    #     lr=(5e-5, 5e-5),
+    #     epochs=600,
+    #     clip_value=1e-2,
+    #     n_critic=5,
+    #     latent_dim=96,
+    #     condition=True)

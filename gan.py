@@ -17,7 +17,13 @@ class Generator(nn.Module):
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
-        # conditional gan
+        if condition_len == 0:
+            # no-conditional GAN
+            self.condition = False
+        else:
+            # cGAN
+            self.condition = True
+
         input_feature = noise_len + condition_len
         self.model = nn.Sequential(*block(input_feature, 128, normalize=False),
                                    *block(128, 256), *block(256, 512),
@@ -26,7 +32,10 @@ class Generator(nn.Module):
 
     def forward(self, z: torch.Tensor, con: torch.Tensor):
         # Concatenate noise and condition to produce input
-        x = torch.concat([z, con], dim=-1)
+        if self.condition:
+            x = torch.concat([z, con], dim=-1)
+        else:
+            x = z
         out = self.model(x)
         return out
 
@@ -35,17 +44,26 @@ class Discriminator(nn.Module):
 
     def __init__(self, input_feature: int, condition_len: int):
         super(Discriminator, self).__init__()
+        if condition_len == 0:
+            # no-conditional GAN
+            self.condition = False
+        else:
+            # cGAN
+            self.condition = True
+        input_feature = input_feature + condition_len
 
-        self.model = nn.Sequential(
-            nn.Linear(input_feature + condition_len, 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1)
-        )
+        self.model = nn.Sequential(nn.Linear(input_feature, 512),
+                                   nn.LeakyReLU(0.2, inplace=True),
+                                   nn.Linear(512, 256),
+                                   nn.LeakyReLU(0.2, inplace=True),
+                                   nn.Linear(256, 1))
 
     def forward(self, x: torch.Tensor, con: torch.Tensor):
-        x_flat = torch.concat([x, con], dim=-1)
+        if self.condition:
+            x_flat = torch.concat([x, con], dim=-1)
+        else:
+            x_flat = x
+
         validity = self.model(x_flat)
         return validity
 
@@ -55,8 +73,8 @@ class MyDataset(Dataset):
     def __init__(self, data: np.ndarray):
         data = data.astype(float)
         data = torch.from_numpy(data).float().cuda()
-        self.samples = data[:, :-2]
-        self.labels = data[:, -2:]
+        self.samples = data[:, :96]
+        self.labels = data[:, 96:]
 
     def __len__(self):
         return len(self.samples)
