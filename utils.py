@@ -3,7 +3,7 @@ import statsmodels.api as sm
 from statsmodels.distributions.empirical_distribution import ECDF
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import correlation
-from scipy.stats import wasserstein_distance
+from scipy.stats import wasserstein_distance, norm
 from tslearn.metrics import dtw
 import numpy as np
 import random
@@ -62,8 +62,10 @@ def cor_dist(data_1, data_2):
 
 
 def ws_dist(data_1, data_2):
-    # compute wasserstein distance between data_1 & data_2
-    return wasserstein_distance(data_1, data_2)
+    # compute wasserstein distance between the distribution data_1 & data_2
+    distrib_1 = norm.pdf(data_1)
+    distrib_2 = norm.pdf(data_2)
+    return wasserstein_distance(distrib_1, distrib_2)
 
 
 def dtw_dist(data_1, data_2):
